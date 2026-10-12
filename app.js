@@ -110,9 +110,10 @@ const clientTools = {
 function readAgentId() {
   const hash = new URLSearchParams(location.hash.slice(1));
   const fromLink = hash.get('agent');
+  // Kennung bleibt bewusst in der Adresse: iOS gibt einer Home-Bildschirm-App einen eigenen Speicher,
+  // nur über die Adresse kommt die Kennung dort an.
   if (fromLink) {
     try { localStorage.setItem(STORE_KEY, fromLink.trim()); } catch {}
-    history.replaceState(null, '', location.pathname + location.search);
     return fromLink.trim();
   }
   try { return localStorage.getItem(STORE_KEY); } catch { return null; }
