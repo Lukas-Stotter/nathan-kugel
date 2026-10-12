@@ -23,6 +23,24 @@ const STATUS = {
 };
 
 const orb = createOrb($('orb'));
+
+// Layout: Kugel, Ring und Texte so verteilen, dass sich auf keinem iPhone etwas ueberschneidet.
+const safeProbe = document.createElement('div');
+safeProbe.style.cssText = 'position:fixed;top:0;left:0;visibility:hidden;pointer-events:none;padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)';
+document.body.appendChild(safeProbe);
+function layout() {
+  const w = window.innerWidth, h = window.innerHeight;
+  const cs = getComputedStyle(safeProbe);
+  const st = parseFloat(cs.paddingTop) || 0, sb = parseFloat(cs.paddingBottom) || 0;
+  const R = Math.min(0.30 * w, 0.155 * h);
+  const ring = 1.5 * R;
+  const cy = Math.max(st + 56 + ring, 0.36 * h);
+  orb.setLayout(cy / h, R / Math.min(w, h));
+  document.documentElement.style.setProperty('--hud-top', Math.round(cy + ring + 12) + 'px');
+  document.documentElement.style.setProperty('--hud-bottom', Math.round(sb + 34 + 72 + 26) + 'px');
+}
+window.addEventListener('resize', layout);
+layout();
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 let conv = null;
@@ -61,13 +79,16 @@ async function holdStatus(text, ms, ok = false) {
   if (performance.now() >= statusHoldUntil) showStatus(STATUS[state]);
 }
 
+// Bindestrich-Woerter wie "Preis-Leistung" nicht am Zeilenende trennen.
+const noBreak = (s) => String(s).replace(/(\p{L})-(\p{L})/gu, '$1‑$2');
+
 function showChips(items) {
   const box = $('chips');
   box.innerHTML = '';
   items.forEach((label, i) => {
     const el = document.createElement('span');
     el.className = 'chip';
-    el.textContent = label;
+    el.textContent = noBreak(label);
     box.appendChild(el);
     setTimeout(() => el.classList.add('on'), 140 * i + 30);
   });
@@ -78,7 +99,7 @@ function showTask(text) {
   chips.forEach((el) => el.classList.remove('on'));
   setTimeout(() => {
     $('chips').innerHTML = '';
-    $('taskText').textContent = text;
+    $('taskText').textContent = noBreak(text);
     $('task').classList.add('on');
   }, chips.length ? 450 : 0);
 }
@@ -173,7 +194,10 @@ async function start() {
       },
       onMessage: ({ role, message }) => {
         if (role === 'user' && mode !== 'speaking' && !handedOff) setState('thinking');
-        if (role === 'agent' && CAPTIONS) $('caption').textContent = message;
+        if (role === 'agent' && CAPTIONS) {
+          const parts = String(message).split(/(?<=[.!?])s+/).filter(Boolean);
+          $('caption').textContent = parts.slice(-2).join(' ');
+        }
       },
       onError: (message) => {
         console.error('[nathan]', message);

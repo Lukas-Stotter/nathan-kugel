@@ -16,6 +16,7 @@ uniform float uWork;
 uniform vec3 uColA;
 uniform vec3 uColB;
 uniform float uCenterY;
+uniform float uRadius;
 
 vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
 vec4 mod289(vec4 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
@@ -76,7 +77,7 @@ void main() {
   float t = uTime;
 
   float breathe = 0.02 * sin(t * 1.25) * (1.0 - uEnergy * 0.6);
-  float R = 0.30 * (1.0 + breathe + 0.11 * uLevel);
+  float R = uRadius * (1.0 + breathe + 0.11 * uLevel);
   float wob = snoise(vec3(cos(ang) * 1.4, sin(ang) * 1.4, t * 0.55)) * (0.010 + 0.06 * uLevel);
   float Re = R * (1.0 + wob);
 
@@ -143,7 +144,7 @@ export const PALETTE = {
   working:    { a: [0.08, 0.78, 0.68], b: [0.36, 0.95, 0.84], energy: 0.50, swirl: 1.7, work: 1 },
 };
 
-export function createOrb(canvas, { centerY = 0.40 } = {}) {
+export function createOrb(canvas, { centerY = 0.40, radius = 0.30 } = {}) {
   const gl = canvas.getContext('webgl', { antialias: false, premultipliedAlpha: false, powerPreference: 'high-performance' });
   if (!gl) throw new Error('WebGL nicht verfuegbar');
 
@@ -169,7 +170,7 @@ export function createOrb(canvas, { centerY = 0.40 } = {}) {
   gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
 
   const u = {};
-  for (const name of ['uRes', 'uTime', 'uLevel', 'uEnergy', 'uWork', 'uColA', 'uColB', 'uCenterY']) {
+  for (const name of ['uRes', 'uTime', 'uLevel', 'uEnergy', 'uWork', 'uColA', 'uColB', 'uCenterY', 'uRadius']) {
     u[name] = gl.getUniformLocation(prog, name);
   }
 
@@ -216,6 +217,7 @@ export function createOrb(canvas, { centerY = 0.40 } = {}) {
     gl.uniform3fv(u.uColA, cur.a);
     gl.uniform3fv(u.uColB, cur.b);
     gl.uniform1f(u.uCenterY, centerY);
+    gl.uniform1f(u.uRadius, radius);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     requestAnimationFrame(frame);
   };
@@ -224,5 +226,7 @@ export function createOrb(canvas, { centerY = 0.40 } = {}) {
   return {
     setState(name) { target = structuredClone(PALETTE[name] || PALETTE.idle); },
     setLevel(v) { level = Math.max(0, Math.min(1, v)); },
+    // Lage der Kugel: Mitte als Anteil der Hoehe von oben, Radius als Anteil der kurzen Bildschirmseite.
+    setLayout(c, r) { centerY = c; radius = r; },
   };
 }

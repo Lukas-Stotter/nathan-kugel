@@ -32,8 +32,9 @@
   }
 
   .hud {
-    position: fixed; left: 0; right: 0; top: 68%; display: flex; flex-direction: column;
-    align-items: center; gap: 14px; padding: 0 20px; pointer-events: none;
+    position: fixed; left: 0; right: 0; top: var(--hud-top, 64%); bottom: var(--hud-bottom, 150px);
+    display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 0 20px;
+    pointer-events: none; overflow: hidden;
   }
   .status {
     font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 13px;
@@ -56,16 +57,17 @@
   .chip.on { opacity: .92; transform: none; }
 
   .task {
-    max-width: 380px; width: 100%; padding: 14px 16px; border-radius: 14px;
+    max-width: 360px; width: 100%; padding: 11px 14px; border-radius: 14px;
     border: 1px solid rgb(var(--accent) / .7); background: rgb(var(--accent) / .06);
-    font-size: 14px; line-height: 1.45; opacity: 0; transform: translateY(8px);
+    font-size: 13px; line-height: 1.4; opacity: 0; transform: translateY(8px);
     transition: opacity .5s ease, transform .5s ease;
   }
   .task.on { opacity: 1; transform: none; }
-  .task .label { font-size: 11px; letter-spacing: .2em; font-weight: 700; opacity: .7; margin-bottom: 6px; }
+  .task .label { font-size: 10px; letter-spacing: .2em; font-weight: 700; opacity: .7; margin-bottom: 4px; }
 
   .caption {
-    max-width: 440px; text-align: center; font-size: 16px; line-height: 1.45; opacity: .85; min-height: 1px;
+    max-width: 360px; text-align: center; font-size: 15px; line-height: 1.4; opacity: .85; min-height: 1px;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
   }
 
   .mic {
