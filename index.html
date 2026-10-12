@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#000000">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Nathan">
+<meta name="robots" content="noindex, nofollow">
+<title>Nathan</title>
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<style>
+  :root {
+    --fg: 255 255 255;
+    --accent: 201 134 58;
+    --safe-b: env(safe-area-inset-bottom, 0px);
+    --safe-t: env(safe-area-inset-top, 0px);
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    margin: 0; height: 100%; background: #000; color: rgb(var(--fg));
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Inter, sans-serif;
+    overflow: hidden; overscroll-behavior: none; user-select: none; -webkit-user-select: none;
+  }
+  #orb { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+
+  .brand {
+    position: fixed; top: calc(var(--safe-t) + 22px); left: 0; right: 0; text-align: center;
+    font-size: 12px; letter-spacing: .42em; font-weight: 600; opacity: .55; padding-left: .42em;
+  }
+
+  .hud {
+    position: fixed; left: 0; right: 0; top: 68%; display: flex; flex-direction: column;
+    align-items: center; gap: 14px; padding: 0 20px; pointer-events: none;
+  }
+  .status {
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 13px;
+    letter-spacing: .14em; opacity: .85; display: flex; align-items: center; gap: 10px;
+    min-height: 18px; transition: opacity .35s ease;
+  }
+  .status .dot {
+    width: 6px; height: 6px; border-radius: 50%; background: rgb(var(--fg)); opacity: .9;
+    animation: blink 1.4s ease-in-out infinite;
+  }
+  .status.ok .dot { background: rgb(var(--accent)); animation: none; }
+  @keyframes blink { 0%,100% { opacity: .25 } 50% { opacity: 1 } }
+
+  .chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; max-width: 420px; }
+  .chip {
+    font-size: 12px; letter-spacing: .04em; padding: 6px 11px; border-radius: 999px;
+    border: 1px solid rgb(var(--fg) / .28); background: rgb(var(--fg) / .05); opacity: 0;
+    transform: translateY(6px); transition: opacity .45s ease, transform .45s ease;
+  }
+  .chip.on { opacity: .92; transform: none; }
+
+  .task {
+    max-width: 380px; width: 100%; padding: 14px 16px; border-radius: 14px;
+    border: 1px solid rgb(var(--accent) / .7); background: rgb(var(--accent) / .06);
+    font-size: 14px; line-height: 1.45; opacity: 0; transform: translateY(8px);
+    transition: opacity .5s ease, transform .5s ease;
+  }
+  .task.on { opacity: 1; transform: none; }
+  .task .label { font-size: 11px; letter-spacing: .2em; font-weight: 700; opacity: .7; margin-bottom: 6px; }
+
+  .caption {
+    max-width: 440px; text-align: center; font-size: 16px; line-height: 1.45; opacity: .85; min-height: 1px;
+  }
+
+  .mic {
+    position: fixed; left: 50%; bottom: calc(var(--safe-b) + 34px); transform: translateX(-50%);
+    width: 72px; height: 72px; border-radius: 50%; border: 1px solid rgb(var(--fg) / .35);
+    background: rgb(var(--fg) / .04); color: rgb(var(--fg)); display: grid; place-items: center;
+    cursor: pointer; transition: background .3s ease, border-color .3s ease, transform .15s ease;
+    outline: none;
+  }
+  .mic:active { transform: translateX(-50%) scale(.94); }
+  .mic svg { width: 26px; height: 26px; opacity: .9; }
+  .mic.live { border-color: rgb(var(--accent) / .9); background: rgb(var(--accent) / .12); }
+  .mic .stop { display: none; }
+  .mic.live .go { display: none; }
+  .mic.live .stop { display: block; }
+
+  .setup {
+    position: fixed; inset: 0; display: none; align-items: center; justify-content: center;
+    background: rgb(0 0 0 / .86); padding: 24px;
+  }
+  .setup.on { display: flex; }
+  .setup form { width: 100%; max-width: 360px; display: flex; flex-direction: column; gap: 12px; }
+  .setup p { margin: 0; font-size: 14px; line-height: 1.5; opacity: .85; }
+  .setup input {
+    font: inherit; font-size: 16px; padding: 12px 14px; border-radius: 10px; color: inherit;
+    background: rgb(var(--fg) / .06); border: 1px solid rgb(var(--fg) / .3); user-select: text; -webkit-user-select: text;
+  }
+  .setup button {
+    font: inherit; font-size: 15px; font-weight: 600; padding: 12px; border-radius: 10px; cursor: pointer;
+    color: inherit; background: rgb(var(--accent) / .15); border: 1px solid rgb(var(--accent) / .9);
+  }
+  .err { color: rgb(255 170 160); font-size: 13px; min-height: 1em; }
+
+  @media (prefers-reduced-motion: reduce) { .status .dot { animation: none } }
+</style>
+</head>
+<body>
+<canvas id="orb" aria-hidden="true"></canvas>
+<div class="brand">NATHAN</div>
+
+<div class="hud" aria-live="polite">
+  <div class="status" id="status"><span class="dot"></span><span id="statusText">Bereit</span></div>
+  <div class="chips" id="chips"></div>
+  <div class="task" id="task"><div class="label">AUFTRAG</div><div id="taskText"></div></div>
+  <div class="caption" id="caption"></div>
+</div>
+
+<button class="mic" id="mic" aria-label="Mit Nathan sprechen">
+  <svg class="go" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/></svg>
+  <svg class="stop" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="2"/></svg>
+</button>
+
+<div class="setup" id="setup">
+  <form id="setupForm">
+    <p>Einmalig: die Agent-Kennung von Nathan eintragen. Sie bleibt nur auf diesem Gerät.</p>
+    <input id="agentInput" placeholder="agent_..." autocomplete="off" autocapitalize="off" spellcheck="false">
+    <div class="err" id="setupErr"></div>
+    <button type="submit">Speichern</button>
+  </form>
+</div>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>
