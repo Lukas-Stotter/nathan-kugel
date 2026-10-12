@@ -31,6 +31,15 @@ let mode = 'listening';
 let handedOff = false;
 let statusHoldUntil = 0;
 let wakeLock = null;
+let phase = 'off'; // off | connecting | live | closing
+
+function setPhase(p) {
+  phase = p;
+  const mic = $('mic');
+  mic.classList.toggle('connecting', p === 'connecting');
+  mic.classList.toggle('live', p === 'live');
+  $('micHint').textContent = p === 'live' ? 'Tippen zum Beenden' : p === 'off' ? 'Tippen zum Sprechen' : '';
+}
 
 // ---------- Anzeige ----------
 
@@ -129,7 +138,7 @@ function micErrorText(err) {
 function afterSession() {
   conv = null;
   mode = 'listening';
-  $('mic').classList.remove('live');
+  setPhase('off');
   setState(handedOff ? 'working' : 'idle');
 }
 
@@ -146,7 +155,7 @@ async function start() {
   const agentId = readAgentId();
   if (!agentId) { openSetup(); return; }
   resetHud();
-  $('mic').classList.add('live');
+  setPhase('connecting');
   setState('connecting');
   requestWakeLock();
   try {
@@ -172,6 +181,7 @@ async function start() {
       },
       onDisconnect: () => afterSession(),
     });
+    if (phase === 'connecting') setPhase('live');
     if (state === 'connecting') setState('listening');
   } catch (err) {
     console.error('[nathan]', err);
@@ -182,12 +192,17 @@ async function start() {
 
 async function stop() {
   const c = conv;
+  setPhase('closing');
   conv = null;
   try { await c.endSession(); } catch {}
   afterSession();
 }
 
-$('mic').addEventListener('click', () => (conv ? stop() : start()));
+// Knopf wie ein Anruf: an = Gespraech laeuft, aus = Nathan hoert nichts mehr. Waehrend Verbinden/Beenden wird Tippen ignoriert.
+$('mic').addEventListener('click', () => {
+  if (phase === 'off') start();
+  else if (phase === 'live') stop();
+});
 
 // Pegel an die Kugel: beim Zuhoeren das Mikro, beim Sprechen Nathans Stimme.
 (function levelLoop() {

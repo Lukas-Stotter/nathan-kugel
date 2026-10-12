@@ -81,6 +81,12 @@
   .mic .stop { display: none; }
   .mic.live .go { display: none; }
   .mic.live .stop { display: block; }
+  .mic.connecting { animation: pulse 1s ease-in-out infinite; border-color: rgb(var(--accent) / .6); }
+  @keyframes pulse { 0%,100% { opacity: .45 } 50% { opacity: 1 } }
+  .mic-hint {
+    position: fixed; left: 0; right: 0; bottom: calc(var(--safe-b) + 10px); text-align: center;
+    font-size: 11px; letter-spacing: .08em; opacity: .5; pointer-events: none; min-height: 14px;
+  }
 
   .setup {
     position: fixed; inset: 0; display: none; align-items: center; justify-content: center;
@@ -117,6 +123,8 @@
   <svg class="go" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/></svg>
   <svg class="stop" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="2"/></svg>
 </button>
+
+<div class="mic-hint" id="micHint">Tippen zum Sprechen</div>
 
 <div class="setup" id="setup">
   <form id="setupForm">
