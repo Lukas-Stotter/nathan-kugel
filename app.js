@@ -154,8 +154,11 @@ async function start() {
       agentId,
       connectionType: CONNECTION,
       clientTools,
+      onConversationCreated: (c) => { conv = c; },
       onModeChange: ({ mode: m }) => {
         mode = m;
+        // Mikro stumm, solange Nathan spricht: sonst hoert er sich ueber den iPhone-Lautsprecher selbst.
+        try { if (conv) conv.setMicMuted(m === 'speaking'); } catch {}
         if (m === 'speaking') setState('speaking');
         else setState(handedOff ? 'working' : 'listening');
       },
